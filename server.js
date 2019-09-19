@@ -33,6 +33,8 @@ server.get("/api/accounts", (req, res) => {
 
 //create an account
 server.post("/api/accounts", validateAccount, (req, res) => {
+    const { name, budget } = req.body;
+
     db("accounts").insert({ name, budget })
     .then(accounts => res.json(accounts) )
     .catch(error => res.status(500).json({message: "Server Error inserting this account"}))    
@@ -45,6 +47,16 @@ server.delete("/api/accounts/:id", validateAccountById, (req, res) => {
     db("accounts").where({id}).del()
     .then(account => res.status(200).json({message: "Account was deleted"}))
     .catch(error => res.status(500).json({message: "There was an error deleting that account"}))
+})
+
+//update an account by id
+server.put("/api/accounts/:id", validateAccountById, (req, res) => {
+    const { id } = req.params;
+    const changes = req.body;
+    console.log(changes);
+    db("accounts").where({id}).update(changes)
+    .then(account => res.status(200).json({message: "Account was updated"}))
+    .catch(error => res.status(500).json({message: "Server Error when updating that account"}))
 })
 
 
