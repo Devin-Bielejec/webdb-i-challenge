@@ -6,6 +6,24 @@ const server = express();
 
 server.use(express.json());
 
+//Middleware
+const validateAccount = (req, res, next) => {
+    const { name, budget } = req.body;
+    !name ? res.status(404).json({message: "Name is required"}) : null;
+    !budget ? res.status(404).json({message: "Budget is required"}) : null;
+    next();
+}
+
+const validateAccountById = (req, res, next) => {
+    const { id } = req.params;
+    
+    db("accounts").where({id})
+    .then(account => null)
+    .catch(error => res.status(500).json({message: "Account with that ID does not exist"}))
+
+    next();
+}
+
 //get all accounts
 server.get("/api/accounts", (req, res) => {
     db("accounts")
@@ -14,18 +32,22 @@ server.get("/api/accounts", (req, res) => {
 })
 
 //create an account
-server.post("/api/accounts", (req, res) => {
-    const { name, budget } = req.body;
-
-    !name ? res.status(404).json({message: "Name is required"}) : null;
-
-    !budget ? res.status(404).json({message: "Budget is required"}) : null;
-
+server.post("/api/accounts", validateAccount, (req, res) => {
     db("accounts").insert({ name, budget })
     .then(accounts => res.json(accounts) )
     .catch(error => res.status(500).json({message: "Server Error inserting this account"}))    
-
 })
+
+//remove an account by id
+server.delete("/api/accounts/:id", validateAccountById, (req, res) => {
+    const { id } = req.params;
+
+    db("accounts").where({id}).del()
+    .then(account => res.status(200).json({message: "Account was deleted"}))
+    .catch(error => res.status(500).json({message: "There was an error deleting that account"}))
+})
+
+
 
 const port = 5000;
 
